@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal for School</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    #date {
+      font-size: 1.2em;
+      color: #555;
+      margin-top: 10px;
+    }
+
+    #meal {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fff;
+      padding: 15px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your School Name Here</h1>
+  <div id="date"></div>
+  <div id="meal">Loading... Please wait</div>
+  
+  <div class="button-container">
+    <button onclick="changeDate(-1)">Yesterday</button>
+    <button onclick="changeDate(1)">Tomorrow</button>
+  </div>
+  
+  <script>
+    let currentDate = new Date();
+    
+    document.addEventListener("DOMContentLoaded", function () {
+      updateDateDisplay();
+      fetchMeal();
+    });
+
+    function changeDate(days) {
+      currentDate.setDate(currentDate.getDate() + days);
+      updateDateDisplay();
+      fetchMeal();
+    }
+
+    function updateDateDisplay() {
+      const dateDiv = document.getElementById("date");
+      const year = currentDate.getFullYear();
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = currentDate.getDate().toString().padStart(2, '0');
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = daysOfWeek[currentDate.getDay()]; // Get Date
+      dateDiv.innerText = `${year} - ${month} - ${day} (${dayOfWeek})`;
+    }
+
+    function fetchMeal() {
+      const neisApiUrl = "https://open.neis.go.kr/hub/mealServiceDietInfo"; // NEIS API Endpoint URL
+      const apiKey = "Your api Key"; // NEIS API Key
+      
+      // Set school information
+      const schoolCode = "Your School Code";
+      const officeCode = "Your region Code";
+      const formattedMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const formattedDay = currentDate.getDate().toString().padStart(2, '0');
+      const formattedDate = `${currentDate.getFullYear()}${formattedMonth}${formattedDay}`; // Save Date as YYYYMMDD
+
+      // Request NEIS API
+      const apiUrl = `${neisApiUrl}?KEY=${apiKey}&Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_YMD=${formattedDate}`;
+
+      fetch(apiUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const mealInfo = data?.mealServiceDietInfo?.[1]?.row?.[0]?.DDISH_NM;
+          const mealDiv = document.getElementById("meal");
+          if (mealInfo) {
+            const cleanedMealInfo = mealInfo.replace(/<br\/>/g, "\n").replace(/(<([^>]+)>)/gi, "");
+            mealDiv.innerText = cleanedMealInfo;
+          } else {
+            mealDiv.innerText = "No Meal Data";
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching or processing meal data:", error);
+          const mealDiv = document.getElementById("meal");
+          mealDiv.innerText = "Error while get Meal Info";
+        });
+    }
+  </script>
+</body>
+</html>
